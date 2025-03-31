@@ -5,6 +5,18 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
+// 회원가입 API 응답 타입 정의
+interface SignupResponse {
+  message?: string
+  error?: string
+  user?: {
+    id: string
+    name: string
+    email: string
+    role: string
+  }
+}
+
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -62,7 +74,7 @@ export default function SignupPage() {
         }),
       })
 
-      const data = await response.json()
+      const data = (await response.json()) as SignupResponse
 
       if (!response.ok) {
         throw new Error(data.error || "회원가입 중 오류가 발생했습니다.")

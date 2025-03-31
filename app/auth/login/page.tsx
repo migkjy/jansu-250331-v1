@@ -5,6 +5,19 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
+// 로그인 API 응답 타입 정의
+interface LoginResponse {
+  message?: string
+  error?: string
+  user?: {
+    id: string
+    name: string
+    email: string
+    role: "admin" | "user"
+    hourlyRate: number
+  }
+}
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
@@ -32,7 +45,7 @@ export default function LoginPage() {
         credentials: "include", // 쿠키 포함
       })
 
-      const data = await response.json()
+      const data = (await response.json()) as LoginResponse
 
       if (!response.ok) {
         throw new Error(data.error || "로그인 중 오류가 발생했습니다.")
@@ -41,7 +54,7 @@ export default function LoginPage() {
       console.log("로그인 성공:", data)
 
       // 로그인 성공 후 강제 페이지 리로드
-      if (data.user.role === "admin") {
+      if (data.user?.role === "admin") {
         window.location.href = "/admin"
       } else {
         window.location.href = "/"
