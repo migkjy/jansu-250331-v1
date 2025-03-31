@@ -4,9 +4,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/src/db"
 import { users } from "@/src/db/schema"
 
+interface SignupRequest {
+  name: string
+  email: string
+  password: string
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json()
+    const { name, email, password } = await request.json() as SignupRequest
 
     // 필수 필드 검증
     if (!name || !email || !password) {

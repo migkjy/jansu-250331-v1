@@ -5,9 +5,14 @@ import { signJwtToken } from "@/lib/auth/jwt"
 import { db } from "@/src/db"
 import { users } from "@/src/db/schema"
 
+interface LoginRequest {
+  email: string
+  password: string
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email, password } = await request.json() as LoginRequest
     console.log(`로그인 요청: ${email}`)
 
     // 필수 필드 검증
