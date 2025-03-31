@@ -4,7 +4,7 @@ import { cookies } from "next/headers"
 // JWT 비밀키 - 환경 변수에서 불러오거나 기본값 사용
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production"
 
-type TokenPayload = {
+export type TokenPayload = {
   id: string
   email: string
   role: string

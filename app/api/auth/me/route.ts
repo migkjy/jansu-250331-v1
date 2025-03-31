@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm"
 import jwt from "jsonwebtoken"
 import { NextRequest, NextResponse } from "next/server"
+import { TokenPayload } from "@/lib/auth/jwt"
 import { db } from "@/src/db"
 import { users } from "@/src/db/schema"
 
@@ -8,9 +9,9 @@ import { users } from "@/src/db/schema"
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production"
 
 // 토큰 직접 검증
-function verifyToken(token: string) {
+function verifyToken(token: string): TokenPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET)
+    return jwt.verify(token, JWT_SECRET) as TokenPayload
   } catch (error) {
     console.error("토큰 검증 실패:", error)
     return null
