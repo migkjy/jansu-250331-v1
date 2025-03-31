@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "이메일 또는 비밀번호가 일치하지 않습니다." }, { status: 401 })
     }
 
-    const foundUser = user[0]
+    // 이미 user.length > 0 체크를 했으므로 user[0]는 반드시 존재함을 타입스크립트에게 알림
+    const foundUser = user[0]!
 
     // 비밀번호 검증
     const isPasswordValid = await bcrypt.compare(password, foundUser.passwordHash)

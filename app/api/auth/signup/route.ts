@@ -52,7 +52,8 @@ export async function POST(request: NextRequest) {
       })
       .returning({ id: users.id, email: users.email, name: users.name, role: users.role })
 
-    const createdUser = newUser[0]
+    // 새로 생성된 사용자는 반드시 존재하므로 타입 단언(!)을 사용합니다
+    const createdUser = newUser[0]!
 
     // 민감한 정보를 제외하고 응답
     return NextResponse.json(
