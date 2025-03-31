@@ -12,7 +12,7 @@ interface LoginRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json() as LoginRequest
+    const { email, password } = (await request.json()) as LoginRequest
     console.log(`로그인 요청: ${email}`)
 
     // 필수 필드 검증
@@ -28,32 +28,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "이메일 또는 비밀번호가 일치하지 않습니다." }, { status: 401 })
     }
 
+    const foundUser = user[0]
+
     // 비밀번호 검증
-    const isPasswordValid = await bcrypt.compare(password, user[0].passwordHash)
+    const isPasswordValid = await bcrypt.compare(password, foundUser.passwordHash)
 
     if (!isPasswordValid) {
       console.log(`로그인 실패: 비밀번호 불일치 - ${email}`)
       return NextResponse.json({ error: "이메일 또는 비밀번호가 일치하지 않습니다." }, { status: 401 })
     }
 
-    console.log(`로그인 성공: ${email}, 역할: ${user[0].role}`)
+    console.log(`로그인 성공: ${email}, 역할: ${foundUser.role}`)
 
     // JWT 토큰 생성
     const token = signJwtToken({
-      id: user[0].id,
-      email: user[0].email,
-      role: user[0].role,
+      id: foundUser.id,
+      email: foundUser.email,
+      role: foundUser.role,
     })
 
     // 응답 생성
     const response = NextResponse.json({
       message: "로그인 성공",
       user: {
-        id: user[0].id,
-        name: user[0].name,
-        email: user[0].email,
-        role: user[0].role,
-        hourlyRate: user[0].hourlyRate,
+        id: foundUser.id,
+        name: foundUser.name,
+        email: foundUser.email,
+        role: foundUser.role,
+        hourlyRate: foundUser.hourlyRate,
       },
     })
 

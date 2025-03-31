@@ -12,7 +12,7 @@ interface SignupRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json() as SignupRequest
+    const { name, email, password } = (await request.json()) as SignupRequest
 
     // 필수 필드 검증
     if (!name || !email || !password) {
@@ -52,15 +52,17 @@ export async function POST(request: NextRequest) {
       })
       .returning({ id: users.id, email: users.email, name: users.name, role: users.role })
 
+    const createdUser = newUser[0]
+
     // 민감한 정보를 제외하고 응답
     return NextResponse.json(
       {
         message: "회원가입이 완료되었습니다.",
         user: {
-          id: newUser[0].id,
-          name: newUser[0].name,
-          email: newUser[0].email,
-          role: newUser[0].role,
+          id: createdUser.id,
+          name: createdUser.name,
+          email: createdUser.email,
+          role: createdUser.role,
         },
       },
       { status: 201 }
