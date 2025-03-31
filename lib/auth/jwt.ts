@@ -27,9 +27,9 @@ export function verifyJwtToken(token: string): TokenPayload | null {
 
 // 쿠키에서 토큰 가져오기 (비동기 처리)
 export async function getTokenFromCookies(): Promise<string | undefined> {
-  const cookieStore = cookies()
-  const token = await cookieStore.get("token")?.value
-  return token
+  const cookieStore = await cookies()
+  const tokenCookie = cookieStore.get("token")
+  return tokenCookie?.value
 }
 
 // 토큰에서 사용자 정보 가져오기 (비동기 처리)
