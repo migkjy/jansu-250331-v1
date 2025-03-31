@@ -2,12 +2,16 @@
 
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const _router = useRouter()
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword)
@@ -15,8 +19,39 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // 로그인 로직 구현 예정
-    console.log("로그인 시도:", { email, password })
+    setError("")
+    setIsLoading(true)
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: "include", // 쿠키 포함
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "로그인 중 오류가 발생했습니다.")
+      }
+
+      console.log("로그인 성공:", data)
+
+      // 로그인 성공 후 강제 페이지 리로드
+      if (data.user.role === "admin") {
+        window.location.href = "/admin"
+      } else {
+        window.location.href = "/"
+      }
+    } catch (err) {
+      console.error("로그인 오류:", err)
+      setError(err instanceof Error ? err.message : "로그인 중 오류가 발생했습니다.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -32,6 +67,13 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
+
+        {error && (
+          <div className="rounded-md bg-red-50 p-4">
+            <div className="text-sm text-red-700">{error}</div>
+          </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
@@ -106,9 +148,10 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+              disabled={isLoading}
+              className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:bg-blue-400"
             >
-              로그인
+              {isLoading ? "로그인 중..." : "로그인"}
             </button>
           </div>
         </form>

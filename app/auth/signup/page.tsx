@@ -2,6 +2,7 @@
 
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 export default function SignupPage() {
@@ -12,6 +13,10 @@ export default function SignupPage() {
     password: "",
     confirmPassword: "",
   })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+  const router = useRouter()
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword)
@@ -27,13 +32,54 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
+    setSuccess("")
+
     // 비밀번호 일치 확인
     if (formData.password !== formData.confirmPassword) {
-      alert("비밀번호가 일치하지 않습니다")
+      setError("비밀번호가 일치하지 않습니다")
       return
     }
-    // 회원가입 로직 구현 예정
-    console.log("회원가입 시도:", formData)
+
+    // 비밀번호 길이 확인
+    if (formData.password.length < 8) {
+      setError("비밀번호는 최소 8자 이상이어야 합니다")
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "회원가입 중 오류가 발생했습니다.")
+      }
+
+      setSuccess("회원가입이 완료되었습니다. 잠시 후 로그인 페이지로 이동합니다.")
+
+      // 3초 후 로그인 페이지로 리다이렉트
+      setTimeout(() => {
+        router.push("/auth/login")
+      }, 3000)
+    } catch (err) {
+      console.error("회원가입 오류:", err)
+      setError(err instanceof Error ? err.message : "회원가입 중 오류가 발생했습니다.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -49,6 +95,19 @@ export default function SignupPage() {
             </Link>
           </p>
         </div>
+
+        {error && (
+          <div className="rounded-md bg-red-50 p-4">
+            <div className="text-sm text-red-700">{error}</div>
+          </div>
+        )}
+
+        {success && (
+          <div className="rounded-md bg-green-50 p-4">
+            <div className="text-sm text-green-700">{success}</div>
+          </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
@@ -143,9 +202,10 @@ export default function SignupPage() {
           <div>
             <button
               type="submit"
-              className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+              disabled={isLoading}
+              className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:bg-blue-400"
             >
-              회원가입
+              {isLoading ? "처리 중..." : "회원가입"}
             </button>
           </div>
         </form>
