@@ -6,7 +6,10 @@ import { db } from "@/src/db"
 import { users } from "@/src/db/schema"
 
 // 특정 사용자 조회 API
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   const id = params.id
 
   try {
@@ -88,7 +91,10 @@ interface RequestData {
 }
 
 // 사용자 정보 수정 API
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   const id = params.id
 
   try {
@@ -212,7 +218,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // 사용자 삭제 API
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   const id = params.id
 
   try {
