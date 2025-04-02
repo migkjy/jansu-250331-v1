@@ -8,9 +8,9 @@ import { users } from "@/src/db/schema"
 // 특정 사용자 조회 API
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const id = params.id
+  const id = context.params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
@@ -93,9 +93,9 @@ interface RequestData {
 // 사용자 정보 수정 API
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const id = params.id
+  const id = context.params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
@@ -220,9 +220,9 @@ export async function PUT(
 // 사용자 삭제 API
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const id = params.id
+  const id = context.params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
