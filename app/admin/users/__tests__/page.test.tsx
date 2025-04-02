@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
+import _userEvent from "@testing-library/user-event"
 import AdminUsersPage from "../page"
 
 // API 호출을 모킹합니다
@@ -63,8 +63,8 @@ describe("AdminUsersPage 컴포넌트", () => {
     const rows = screen.getAllByRole("row")
     expect(rows.length).toBe(3) // 헤더 + 2명의 사용자
 
-    // 테이블 셀을 가져와서 확인
-    const cells = screen.getAllByRole("cell")
+    // 테이블 셀을 가져와서 확인 (미사용 변수임을 표시)
+    const _cells = screen.getAllByRole("cell")
 
     // 이메일로 사용자 확인 (이메일은 고유하므로 안전함)
     expect(screen.getByText("admin@test.com")).toBeInTheDocument()
@@ -99,7 +99,7 @@ describe("AdminUsersPage 컴포넌트", () => {
     expect(modal).toBeInTheDocument()
 
     // 모달 내부의 요소들을 확인 - within을 사용하여 모달 내부에서만 검색
-    const modalElement = modal.closest("div.inline-block") || document.body
+    const modalElement = modal.closest("div.inline-block")!
     const modalContainer = within(modalElement)
 
     expect(modalContainer.getByText(/이름/i, { selector: "label" })).toBeInTheDocument()
@@ -132,7 +132,7 @@ describe("AdminUsersPage 컴포넌트", () => {
     expect(modal).toBeInTheDocument()
 
     // 모달 내부의 요소들을 확인 - within을 사용하여 모달 내부에서만 검색
-    const modalElement = modal.closest("div.inline-block") || document.body
+    const modalElement = modal.closest("div.inline-block")!
 
     // form 요소가 없을 수 있으므로 직접 input 요소를 찾음
     const nameInput = modalElement.querySelector('input[name="name"]') as HTMLInputElement
@@ -192,7 +192,7 @@ describe("AdminUsersPage 컴포넌트", () => {
 
     // 모달이 열렸는지 확인
     const modal = await screen.findByText("신규 직원 등록")
-    const modalElement = modal.closest("div.inline-block") || document.body
+    const modalElement = modal.closest("div.inline-block")!
 
     // 폼 입력 - querySelector를 사용하여 요소 찾기
     const nameInput = modalElement.querySelector('input[name="name"]') as HTMLInputElement
@@ -276,7 +276,7 @@ describe("AdminUsersPage 컴포넌트", () => {
     expect(confirmModal).toBeInTheDocument()
 
     // 삭제 모달의 텍스트 확인
-    const modalElement = confirmModal.closest("div.inline-block") || document.body
+    const modalElement = confirmModal.closest("div.inline-block")!
     const modalText = modalElement.textContent || ""
 
     expect(modalText).toContain("정말")
