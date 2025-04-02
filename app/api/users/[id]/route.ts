@@ -5,18 +5,12 @@ import { verifyJwtToken } from "@/lib/auth/jwt"
 import { db } from "@/src/db"
 import { users } from "@/src/db/schema"
 
-type RouteHandlerContext = {
-  params: {
-    id: string
-  }
-}
-
 // 특정 사용자 조회 API
 export async function GET(
   request: Request,
-  context: RouteHandlerContext
+  { params }: { params: { id: string } }
 ) {
-  const id = context.params.id
+  const id = params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
@@ -99,9 +93,9 @@ interface RequestData {
 // 사용자 정보 수정 API
 export async function PUT(
   request: Request,
-  context: RouteHandlerContext
+  { params }: { params: { id: string } }
 ) {
-  const id = context.params.id
+  const id = params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
@@ -226,9 +220,9 @@ export async function PUT(
 // 사용자 삭제 API
 export async function DELETE(
   request: Request,
-  context: RouteHandlerContext
+  { params }: { params: { id: string } }
 ) {
-  const id = context.params.id
+  const id = params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
