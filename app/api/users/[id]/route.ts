@@ -1,27 +1,25 @@
 import bcrypt from "bcryptjs"
 import { and, eq, ne } from "drizzle-orm"
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { verifyJwtToken } from "@/lib/auth/jwt"
 import { db } from "@/src/db"
 import { users } from "@/src/db/schema"
 
-// 표준 타입 정의 - Next.js가 내부적으로 사용하는 params 타입
-type DynamicRouteParams = {
-  params: {
-    id: string
-  }
-}
-
 // 특정 사용자 조회 API
-export async function GET(
-  request: NextRequest,
-  context: DynamicRouteParams
-) {
-  const id = context.params.id
-
+export async function GET(request: Request) {
   try {
+    // URL에서 id 추출
+    const pathParts = new URL(request.url).pathname.split('/')
+    const id = pathParts[pathParts.length - 1]
+    
+    if (!id) {
+      return NextResponse.json({ error: "유효하지 않은 사용자 ID입니다." }, { status: 400 })
+    }
+    
     // 권한 확인 (관리자만 접근 가능)
-    const token = request.cookies.get("token")?.value
+    const cookieHeader = request.headers.get('cookie') || ""
+    const tokenMatch = cookieHeader.match(/token=([^;]+)/)
+    const token = tokenMatch ? tokenMatch[1] : null
 
     if (!token) {
       return NextResponse.json({ error: "인증되지 않은 사용자입니다." }, { status: 401 })
@@ -40,7 +38,7 @@ export async function GET(
         role: users.role,
       })
       .from(users)
-      .where(eq(users.id, userData.id))
+      .where(eq(users.id, userData.id as string))
 
     if (requestingUser.length === 0) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 })
@@ -66,7 +64,7 @@ export async function GET(
         createdAt: users.createdAt,
       })
       .from(users)
-      .where(eq(users.id, id))
+      .where(eq(users.id, id as string))
 
     if (userInfo.length === 0) {
       return NextResponse.json({ error: "사용자를 찾을 수 없습니다." }, { status: 404 })
@@ -84,7 +82,7 @@ interface UpdateUserData {
   email?: string
   passwordHash?: string
   role?: string
-  hourlyRate?: string
+  hourlyRate?: string | null
   phoneNumber?: string
 }
 
@@ -93,20 +91,25 @@ interface RequestData {
   email?: string
   password?: string
   role?: string
-  hourlyRate?: number
+  hourlyRate?: number | null
   phoneNumber?: string
 }
 
 // 사용자 정보 수정 API
-export async function PUT(
-  request: NextRequest,
-  context: DynamicRouteParams
-) {
-  const id = context.params.id
-
+export async function PUT(request: Request) {
   try {
+    // URL에서 id 추출
+    const pathParts = new URL(request.url).pathname.split('/')
+    const id = pathParts[pathParts.length - 1]
+
+    if (!id) {
+      return NextResponse.json({ error: "유효하지 않은 사용자 ID입니다." }, { status: 400 })
+    }
+
     // 권한 확인 (관리자만 접근 가능)
-    const token = request.cookies.get("token")?.value
+    const cookieHeader = request.headers.get('cookie') || ""
+    const tokenMatch = cookieHeader.match(/token=([^;]+)/)
+    const token = tokenMatch ? tokenMatch[1] : null
 
     if (!token) {
       return NextResponse.json({ error: "인증되지 않은 사용자입니다." }, { status: 401 })
@@ -125,7 +128,7 @@ export async function PUT(
         role: users.role,
       })
       .from(users)
-      .where(eq(users.id, userData.id))
+      .where(eq(users.id, userData.id as string))
 
     if (requestingUser.length === 0) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 })
@@ -145,7 +148,7 @@ export async function PUT(
         id: users.id,
       })
       .from(users)
-      .where(eq(users.id, id))
+      .where(eq(users.id, id as string))
 
     if (existingUser.length === 0) {
       return NextResponse.json({ error: "사용자를 찾을 수 없습니다." }, { status: 404 })
@@ -192,7 +195,7 @@ export async function PUT(
       const emailExists = await db
         .select({ id: users.id })
         .from(users)
-        .where(and(eq(users.email, email), ne(users.id, id)))
+        .where(and(eq(users.email, email), ne(users.id, id as string)))
 
       if (emailExists.length > 0) {
         return NextResponse.json({ error: "이미 사용 중인 이메일입니다." }, { status: 400 })
@@ -205,7 +208,7 @@ export async function PUT(
     }
 
     // 사용자 정보 업데이트
-    const updatedUser = await db.update(users).set(updateData).where(eq(users.id, id)).returning({
+    const updatedUser = await db.update(users).set(updateData).where(eq(users.id, id as string)).returning({
       id: users.id,
       name: users.name,
       email: users.email,
@@ -225,15 +228,20 @@ export async function PUT(
 }
 
 // 사용자 삭제 API
-export async function DELETE(
-  request: NextRequest,
-  context: DynamicRouteParams
-) {
-  const id = context.params.id
-
+export async function DELETE(request: Request) {
   try {
+    // URL에서 id 추출
+    const pathParts = new URL(request.url).pathname.split('/')
+    const id = pathParts[pathParts.length - 1]
+
+    if (!id) {
+      return NextResponse.json({ error: "유효하지 않은 사용자 ID입니다." }, { status: 400 })
+    }
+
     // 권한 확인 (관리자만 접근 가능)
-    const token = request.cookies.get("token")?.value
+    const cookieHeader = request.headers.get('cookie') || ""
+    const tokenMatch = cookieHeader.match(/token=([^;]+)/)
+    const token = tokenMatch ? tokenMatch[1] : null
 
     if (!token) {
       return NextResponse.json({ error: "인증되지 않은 사용자입니다." }, { status: 401 })
@@ -252,7 +260,7 @@ export async function DELETE(
         role: users.role,
       })
       .from(users)
-      .where(eq(users.id, userData.id))
+      .where(eq(users.id, userData.id as string))
 
     if (adminUser.length === 0) {
       return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 })
@@ -271,14 +279,14 @@ export async function DELETE(
     }
 
     // 사용자 존재 여부 확인
-    const existingUser = await db.select({ id: users.id }).from(users).where(eq(users.id, id))
+    const existingUser = await db.select({ id: users.id }).from(users).where(eq(users.id, id as string))
 
     if (existingUser.length === 0) {
       return NextResponse.json({ error: "사용자를 찾을 수 없습니다." }, { status: 404 })
     }
 
     // 사용자 삭제
-    await db.delete(users).where(eq(users.id, id))
+    await db.delete(users).where(eq(users.id, id as string))
 
     return NextResponse.json({ message: "사용자가 성공적으로 삭제되었습니다." })
   } catch (error) {

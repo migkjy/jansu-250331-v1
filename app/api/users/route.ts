@@ -37,9 +37,16 @@ export async function GET(request: NextRequest) {
         role: users.role,
       })
       .from(users)
-      .where(eq(users.id, userData.id))
+      .where(eq(users.id, userData.id as string))
 
-    if (adminUser.length === 0 || adminUser[0].role !== "admin") {
+    // 사용자가 존재하지 않거나 관리자가 아닌 경우
+    if (adminUser.length === 0) {
+      return NextResponse.json({ error: "사용자를 찾을 수 없습니다." }, { status: 404 })
+    }
+
+    const userRole = adminUser[0]?.role
+
+    if (userRole !== "admin") {
       return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 })
     }
 
@@ -86,9 +93,16 @@ export async function POST(request: NextRequest) {
         role: users.role,
       })
       .from(users)
-      .where(eq(users.id, userData.id))
+      .where(eq(users.id, userData.id as string))
 
-    if (adminUser.length === 0 || adminUser[0].role !== "admin") {
+    // 사용자가 존재하지 않거나 관리자가 아닌 경우
+    if (adminUser.length === 0) {
+      return NextResponse.json({ error: "사용자를 찾을 수 없습니다." }, { status: 404 })
+    }
+
+    const userRole = adminUser[0]?.role
+
+    if (userRole !== "admin") {
       return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 })
     }
 

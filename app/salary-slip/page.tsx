@@ -39,6 +39,11 @@ interface SalarySlip {
   }
 }
 
+// API 응답 타입 정의
+interface MeApiResponse {
+  user: User
+}
+
 export default function SalarySlipPage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7))
   const [salaryData, setSalaryData] = useState<SalarySlip | null>(null)
@@ -59,7 +64,7 @@ export default function SalarySlipPage() {
           return
         }
 
-        const data = await response.json()
+        const data = await response.json() as MeApiResponse
         setUser(data.user)
         await fetchSalaryData(selectedMonth)
       } catch (err) {
@@ -85,7 +90,7 @@ export default function SalarySlipPage() {
         throw new Error(`급여 정보를 가져오는데 실패했습니다 (${response.status})`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as SalarySlip
       setSalaryData(data)
     } catch (err) {
       console.error("급여 정보 로드 오류:", err)

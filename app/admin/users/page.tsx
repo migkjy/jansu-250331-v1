@@ -20,6 +20,30 @@ interface AdminUser {
   role: "admin" | "user"
 }
 
+// API 응답 타입 정의
+interface MeApiResponse {
+  user: {
+    id: string
+    name: string
+    email: string
+    role: "admin" | "user"
+  }
+}
+
+interface CreateUserResponse {
+  user: User
+  message: string
+}
+
+interface UpdateUserResponse {
+  user: User
+  message: string
+}
+
+interface DeleteUserResponse {
+  message: string
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null)
@@ -53,7 +77,7 @@ export default function AdminUsersPage() {
           return
         }
 
-        const adminData = await adminResponse.json()
+        const adminData = await adminResponse.json() as MeApiResponse
 
         if (adminData.user.role !== "admin") {
           window.location.href = "/"
@@ -68,7 +92,7 @@ export default function AdminUsersPage() {
         })
 
         if (usersResponse.ok) {
-          const usersData = await usersResponse.json()
+          const usersData = await usersResponse.json() as User[]
           setUsers(usersData)
         } else {
           throw new Error("사용자 목록을 가져오는데 실패했습니다.")
@@ -137,10 +161,10 @@ export default function AdminUsersPage() {
         credentials: "include",
       })
 
-      const data = await response.json()
+      const data = await response.json() as CreateUserResponse
 
       if (!response.ok) {
-        throw new Error(data.error || "사용자 생성 중 오류가 발생했습니다.")
+        throw new Error(data.message || "사용자 생성 중 오류가 발생했습니다.")
       }
 
       // 성공 시 목록에 추가
@@ -183,10 +207,10 @@ export default function AdminUsersPage() {
         credentials: "include",
       })
 
-      const data = await response.json()
+      const data = await response.json() as UpdateUserResponse
 
       if (!response.ok) {
-        throw new Error(data.error || "사용자 업데이트 중 오류가 발생했습니다.")
+        throw new Error(data.message || "사용자 업데이트 중 오류가 발생했습니다.")
       }
 
       // 성공 시 목록 업데이트
@@ -208,10 +232,10 @@ export default function AdminUsersPage() {
         credentials: "include",
       })
 
-      const data = await response.json()
+      const data = await response.json() as DeleteUserResponse
 
       if (!response.ok) {
-        throw new Error(data.error || "사용자 삭제 중 오류가 발생했습니다.")
+        throw new Error(data.message || "사용자 삭제 중 오류가 발생했습니다.")
       }
 
       // 성공 시 목록에서 제거

@@ -24,6 +24,11 @@ interface WorkLog {
   memo: string
 }
 
+// API 응답 타입 정의
+interface MeApiResponse {
+  user: User
+}
+
 export default function WorkLogsPage() {
   const [user, setUser] = useState<User | null>(null)
   const [workLogs, setWorkLogs] = useState<WorkLog[]>([])
@@ -56,7 +61,7 @@ export default function WorkLogsPage() {
           return
         }
 
-        const userData = await userResponse.json()
+        const userData = await userResponse.json() as MeApiResponse
         setUser(userData.user)
 
         // 근무내역 가져오기
@@ -84,7 +89,7 @@ export default function WorkLogsPage() {
       })
 
       if (response.ok) {
-        const data = await response.json()
+        const data = await response.json() as WorkLog[]
         setWorkLogs(data)
       } else {
         throw new Error("근무내역을 가져오는데 실패했습니다.")
@@ -118,14 +123,26 @@ export default function WorkLogsPage() {
   }
 
   const calculateHours = (start: string, end: string): number => {
-    const [startHour, startMinute] = start.split(":").map(Number)
-    const [endHour, endMinute] = end.split(":").map(Number)
-
-    const startTotalMinutes = startHour * 60 + startMinute
-    const endTotalMinutes = endHour * 60 + endMinute
-
-    const diffMinutes = endTotalMinutes - startTotalMinutes
-    return Math.round((diffMinutes / 60) * 100) / 100
+    try {
+      // Date 객체를 사용하여 시간 차이 계산
+      const today = new Date().toISOString().split('T')[0]; // 오늘 날짜만 추출
+      const startTime = new Date(`${today}T${start}`);
+      const endTime = new Date(`${today}T${end}`);
+      
+      // 유효한 날짜인지 확인
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        return 0;
+      }
+      
+      // 시간 차이 계산 (밀리초 -> 시간)
+      const diffMs = endTime.getTime() - startTime.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+      
+      return diffHours <= 0 ? 0 : Math.round(diffHours * 100) / 100;
+    } catch (error) {
+      console.error('시간 계산 오류:', error);
+      return 0;
+    }
   }
 
   const handleAddWorkLog = async (e: React.FormEvent) => {
@@ -166,10 +183,10 @@ export default function WorkLogsPage() {
         credentials: "include",
       })
 
-      const data = await response.json()
+      const data = await response.json() as { message: string, workLog: WorkLog }
 
       if (!response.ok) {
-        throw new Error(data.error || "근무내역 추가 중 오류가 발생했습니다.")
+        throw new Error(data.message || "근무내역 추가 중 오류가 발생했습니다.")
       }
 
       // 성공 시 목록 업데이트
