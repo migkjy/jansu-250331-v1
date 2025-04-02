@@ -6,8 +6,8 @@ import { db } from "@/src/db"
 import { users } from "@/src/db/schema"
 
 // 특정 사용자 조회 API
-export async function GET(request: NextRequest, context: { params: { id: string } }) {
-  const id = context.params.id
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const id = params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
@@ -88,8 +88,8 @@ interface RequestData {
 }
 
 // 사용자 정보 수정 API
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
-  const id = context.params.id
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  const id = params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
@@ -212,8 +212,8 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
 }
 
 // 사용자 삭제 API
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
-  const id = context.params.id
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  const id = params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
