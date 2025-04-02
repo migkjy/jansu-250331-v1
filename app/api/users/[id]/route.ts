@@ -7,7 +7,7 @@ import { users } from "@/src/db/schema"
 
 // 특정 사용자 조회 API
 export async function GET(request: NextRequest, context: { params: { id: string } }) {
-  const { id } = context.params
+  const id = context.params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
@@ -89,7 +89,7 @@ interface RequestData {
 
 // 사용자 정보 수정 API
 export async function PUT(request: NextRequest, context: { params: { id: string } }) {
-  const { id } = context.params
+  const id = context.params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)
@@ -147,11 +147,19 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
 
     if (name !== undefined) updateData.name = name
     if (email !== undefined) updateData.email = email
+    
+    // 시급 처리 - null, undefined, 또는 숫자값 허용
     if (hourlyRate !== undefined) {
-      // 소수점 제거하고 문자열로 변환
-      const rateAsInt = Math.floor(hourlyRate)
-      updateData.hourlyRate = rateAsInt.toString()
+      if (hourlyRate === null) {
+        // null인 경우 - 데이터베이스에서도 null로 설정
+        updateData.hourlyRate = null
+      } else {
+        // 숫자인 경우 - 소수점 제거하고 문자열로 변환
+        const rateAsInt = Math.floor(hourlyRate)
+        updateData.hourlyRate = rateAsInt.toString()
+      }
     }
+    
     if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber
 
     // 관리자만 다른 사용자의 역할을 변경할 수 있음
@@ -205,7 +213,7 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
 
 // 사용자 삭제 API
 export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
-  const { id } = context.params
+  const id = context.params.id
 
   try {
     // 권한 확인 (관리자만 접근 가능)

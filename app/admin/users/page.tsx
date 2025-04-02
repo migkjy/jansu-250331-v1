@@ -9,7 +9,7 @@ interface User {
   name: string
   email: string
   role: "admin" | "user"
-  hourlyRate: number
+  hourlyRate: number | null
   phoneNumber?: string
 }
 
@@ -35,7 +35,7 @@ export default function AdminUsersPage() {
     email: "",
     password: "",
     role: "user",
-    hourlyRate: 9000,
+    hourlyRate: null as number | null,
     phoneNumber: "",
   })
 
@@ -90,7 +90,7 @@ export default function AdminUsersPage() {
       email: "",
       password: "",
       role: "user",
-      hourlyRate: 9000,
+      hourlyRate: null,
       phoneNumber: "",
     })
     setShowAddUserModal(true)
@@ -118,7 +118,7 @@ export default function AdminUsersPage() {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "hourlyRate" ? parseInt(value, 10) : value,
+      [name]: name === "hourlyRate" ? (value ? parseInt(value, 10) : null) : value,
     }))
   }
 
@@ -425,9 +425,9 @@ export default function AdminUsersPage() {
                       <input
                         type="number"
                         name="hourlyRate"
-                        value={formData.hourlyRate}
+                        value={formData.hourlyRate === null ? "" : formData.hourlyRate}
                         onChange={handleInputChange}
-                        min="8720"
+                        placeholder="선택 사항"
                         className="w-full rounded-md border border-gray-300 px-3 py-2"
                       />
                     </div>
@@ -537,9 +537,9 @@ export default function AdminUsersPage() {
                       <input
                         type="number"
                         name="hourlyRate"
-                        value={formData.hourlyRate}
+                        value={formData.hourlyRate === null ? "" : formData.hourlyRate}
                         onChange={handleInputChange}
-                        min="8720"
+                        placeholder="선택 사항"
                         className="w-full rounded-md border border-gray-300 px-3 py-2"
                       />
                     </div>

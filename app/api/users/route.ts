@@ -112,55 +112,37 @@ export async function POST(request: NextRequest) {
     const salt = await bcrypt.genSalt(10)
     const passwordHash = await bcrypt.hash(password, salt)
 
-    if (hourlyRate !== undefined) {
+    // 기본 사용자 데이터
+    const userDataToInsert = {
+      name,
+      email,
+      passwordHash,
+      role: role || "user",
+    }
+
+    // 시급이 있는 경우만 포함
+    if (hourlyRate !== undefined && hourlyRate !== null) {
       // 소수점 제거하고 정수로 저장
       const rateAsInt = Math.floor(hourlyRate)
-
-      // 사용자 생성
-      const createdUser = await db
-        .insert(users)
-        .values({
-          name,
-          email,
-          passwordHash,
-          role,
-          hourlyRate: rateAsInt.toString(), // 정수 문자열로 저장
-        })
-        .returning({
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          role: users.role,
-          hourlyRate: users.hourlyRate,
-        })
-
-      return NextResponse.json(
-        { message: "사용자가 성공적으로 생성되었습니다.", user: createdUser[0] },
-        { status: 201 }
-      )
-    } else {
-      // 시급 없이 사용자 생성
-      const createdUser = await db
-        .insert(users)
-        .values({
-          name,
-          email,
-          passwordHash,
-          role,
-        })
-        .returning({
-          id: users.id,
-          name: users.name,
-          email: users.email,
-          role: users.role,
-          hourlyRate: users.hourlyRate,
-        })
-
-      return NextResponse.json(
-        { message: "사용자가 성공적으로 생성되었습니다.", user: createdUser[0] },
-        { status: 201 }
-      )
+      Object.assign(userDataToInsert, { hourlyRate: rateAsInt.toString() }) // 정수 문자열로 저장
     }
+
+    // 사용자 생성
+    const createdUser = await db
+      .insert(users)
+      .values(userDataToInsert)
+      .returning({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        hourlyRate: users.hourlyRate,
+      })
+
+    return NextResponse.json(
+      { message: "사용자가 성공적으로 생성되었습니다.", user: createdUser[0] },
+      { status: 201 }
+    )
   } catch (error) {
     console.error("사용자 생성 오류:", error)
     return NextResponse.json({ error: "사용자를 생성하는 중 오류가 발생했습니다." }, { status: 500 })
