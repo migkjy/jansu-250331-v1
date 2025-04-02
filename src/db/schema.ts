@@ -7,7 +7,8 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 150 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 200 }).notNull(),
   role: varchar("role", { length: 20 }).notNull().default("user"),
-  hourlyRate: numeric("hourly_rate", { precision: 10, scale: 2 }).notNull(),
+  phoneNumber: varchar("phone_number", { length: 20 }),
+  hourlyRate: numeric("hourly_rate", { precision: 10, scale: 0 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 

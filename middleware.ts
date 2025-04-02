@@ -7,7 +7,7 @@ const publicPaths = ["/auth/login", "/auth/signup"]
 const adminPaths = ["/admin"]
 
 // 인증이 필요한 경로 (로그인 필요)
-const authRequiredPaths = ["/", "/profile", "/work-logs", "/salary-slip"]
+const authRequiredPaths = ["/profile", "/work-logs", "/salary-slip"]
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -17,11 +17,16 @@ export function middleware(request: NextRequest) {
 
   console.log(`미들웨어에서 토큰 확인:`, hasToken)
 
-  // 로그인 페이지에 접근할 때 토큰이 있으면 홈페이지로 리다이렉트
-  if (publicPaths.some((path) => pathname.startsWith(path)) && hasToken) {
-    console.log("로그인된 사용자가 공개 페이지 접근, 홈페이지로 리다이렉트")
-    // 관리자/일반 사용자 구분은 클라이언트 측에서 처리
-    return NextResponse.redirect(new URL("/", request.url))
+  // 홈 페이지는 별도 처리 - 토큰이 있든 없든 항상 접근 가능
+  if (pathname === "/") {
+    return NextResponse.next()
+  }
+
+  // 로그인/회원가입 페이지에 접근할 때 토큰이 있으면 홈페이지로 리다이렉트
+  // 하지만 지금은 임시로 항상 접근 가능하게 설정
+  if (publicPaths.some((path) => pathname.startsWith(path))) {
+    // 토큰이 있어도 로그인 페이지 접근 가능하도록 수정
+    return NextResponse.next()
   }
 
   // 인증이 필요한 페이지에 미인증 사용자가 접근할 경우 로그인 페이지로 리다이렉트

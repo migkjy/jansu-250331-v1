@@ -1,7 +1,7 @@
 "use client"
 
+import { Calendar, FileText, Home, Users } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 interface User {
@@ -9,68 +9,48 @@ interface User {
   name: string
   email: string
   role: "admin" | "user"
-  hourlyRate: number
 }
 
-// API 응답 타입 정의
-interface MeResponse {
+interface AuthResponse {
   user: User
 }
 
-export default function AdminDashboardPage() {
+export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const _router = useRouter()
+  const [error, setError] = useState("")
 
   useEffect(() => {
-    // 사용자 정보 가져오기
-    const fetchUserData = async () => {
+    const checkAdminAuth = async () => {
       try {
         const response = await fetch("/api/auth/me", {
           credentials: "include",
         })
 
-        if (response.ok) {
-          const userData = (await response.json()) as MeResponse
-          console.log("관리자 페이지에서 사용자 정보 확인:", userData)
-          setUser(userData.user)
-
-          // 일반 사용자인 경우 메인 페이지로 리다이렉트
-          if (userData.user.role !== "admin") {
-            console.log("관리자 권한이 아닙니다. 홈페이지로 이동합니다.")
-            window.location.href = "/"
-            return
-          }
-        } else {
-          console.error("로그인이 필요합니다.")
+        if (!response.ok) {
           window.location.href = "/auth/login"
           return
         }
-      } catch (error) {
-        console.error("사용자 정보 조회 실패:", error)
+
+        const data = (await response.json()) as AuthResponse
+
+        if (data.user.role !== "admin") {
+          window.location.href = "/"
+          return
+        }
+
+        setUser(data.user)
+      } catch (err) {
+        console.error("관리자 인증 오류:", err)
+        setError(err instanceof Error ? err.message : "관리자 인증 중 오류가 발생했습니다.")
         window.location.href = "/auth/login"
-        return
       } finally {
         setLoading(false)
       }
     }
 
-    fetchUserData()
+    checkAdminAuth()
   }, [])
-
-  const handleLogout = async () => {
-    try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-      })
-
-      if (response.ok) {
-        window.location.href = "/auth/login"
-      }
-    } catch (error) {
-      console.error("로그아웃 오류:", error)
-    }
-  }
 
   if (loading) {
     return (
@@ -80,56 +60,98 @@ export default function AdminDashboardPage() {
     )
   }
 
-  if (!user || user.role !== "admin") {
-    // useEffect에서 리다이렉트 처리되므로 여기에서는 리다이렉트 처리가 완료될 때까지 로딩 표시
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-lg">권한 확인 중...</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 rounded-lg bg-white p-6 shadow-md">
-        <div className="flex items-center justify-between">
-          <h1 className="mb-4 text-2xl font-bold">관리자 대시보드</h1>
-          <button onClick={handleLogout} className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600">
-            로그아웃
-          </button>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-12">
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">관리자 대시보드</h1>
+            <p className="mt-2 text-gray-600">
+              안녕하세요, <span className="font-medium">{user?.name}</span>님! 어떤 작업을 하시겠습니까?
+            </p>
+          </div>
+          <Link
+            href="/"
+            className="flex items-center rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
+          >
+            <Home className="mr-1 h-4 w-4" />
+            홈으로
+          </Link>
         </div>
 
-        {user && (
-          <div className="mb-4">
-            <p className="text-lg font-medium">안녕하세요, {user.name} 관리자님!</p>
-            <p className="text-gray-600">관리자 권한으로 로그인하셨습니다</p>
+        {error && (
+          <div className="mb-4 rounded-md bg-red-50 p-4">
+            <div className="text-sm text-red-700">{error}</div>
           </div>
         )}
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-          <Link
-            href="/admin/users"
-            className="rounded-lg bg-indigo-100 p-4 text-center shadow transition hover:bg-indigo-200"
-          >
-            <h2 className="font-bold">직원 관리</h2>
-            <p className="text-sm text-gray-600">직원 등록 및 관리</p>
-          </Link>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
+            <div className="bg-purple-50 p-5">
+              <Users className="h-8 w-8 text-purple-600" />
+            </div>
+            <div className="p-5">
+              <h2 className="mb-2 text-xl font-bold">직원 관리</h2>
+              <p className="mb-4 text-gray-600">직원을 추가, 수정, 삭제하거나 권한을 관리합니다.</p>
+              <Link
+                href="/admin/users"
+                className="inline-block rounded-md bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
+              >
+                직원 관리
+              </Link>
+            </div>
+          </div>
 
-          <Link
-            href="/admin/work-logs"
-            className="rounded-lg bg-blue-100 p-4 text-center shadow transition hover:bg-blue-200"
-          >
-            <h2 className="font-bold">근무내역 관리</h2>
-            <p className="text-sm text-gray-600">전체 직원 근무 기록 관리</p>
-          </Link>
+          <div className="overflow-hidden rounded-lg bg-white shadow">
+            <div className="bg-yellow-50 p-5">
+              <Calendar className="h-8 w-8 text-yellow-600" />
+            </div>
+            <div className="p-5">
+              <h2 className="mb-2 text-xl font-bold">근무내역 관리</h2>
+              <p className="mb-4 text-gray-600">직원들의 근무시간을 확인하고 관리합니다.</p>
+              <Link
+                href="/admin/work-logs"
+                className="inline-block rounded-md bg-yellow-600 px-4 py-2 text-white hover:bg-yellow-700"
+              >
+                근무내역 관리
+              </Link>
+            </div>
+          </div>
 
-          <Link
-            href="/admin/salary-report"
-            className="rounded-lg bg-green-100 p-4 text-center shadow transition hover:bg-green-200"
-          >
-            <h2 className="font-bold">급여 보고서</h2>
-            <p className="text-sm text-gray-600">급여 명세서 관리 및 다운로드</p>
-          </Link>
+          <div className="overflow-hidden rounded-lg bg-white shadow">
+            <div className="bg-red-50 p-5">
+              <FileText className="h-8 w-8 text-red-600" />
+            </div>
+            <div className="p-5">
+              <h2 className="mb-2 text-xl font-bold">급여 보고서</h2>
+              <p className="mb-4 text-gray-600">직원별 급여 현황을 확인하고 보고서를 생성합니다.</p>
+              <Link
+                href="/admin/salary-report"
+                className="inline-block rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+              >
+                급여 보고서
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 rounded-lg bg-white p-6 shadow">
+          <h2 className="mb-4 text-xl font-bold">빠른 통계</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-lg bg-blue-50 p-4 text-center">
+              <p className="text-sm text-gray-500">이번 달 총 근무일수</p>
+              <p className="text-2xl font-bold text-blue-600">계산 중...</p>
+            </div>
+            <div className="rounded-lg bg-green-50 p-4 text-center">
+              <p className="text-sm text-gray-500">이번 달 총 근무시간</p>
+              <p className="text-2xl font-bold text-green-600">계산 중...</p>
+            </div>
+            <div className="rounded-lg bg-indigo-50 p-4 text-center">
+              <p className="text-sm text-gray-500">이번 달 총 지급 급여</p>
+              <p className="text-2xl font-bold text-indigo-600">계산 중...</p>
+            </div>
+          </div>
+          <p className="mt-4 text-right text-sm text-gray-500">* 실시간 데이터는 각 페이지에서 확인할 수 있습니다.</p>
         </div>
       </div>
     </div>
