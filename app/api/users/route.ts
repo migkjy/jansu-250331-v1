@@ -128,21 +128,15 @@ export async function POST(request: NextRequest) {
     }
 
     // 사용자 생성
-    const createdUser = await db
-      .insert(users)
-      .values(userDataToInsert)
-      .returning({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        hourlyRate: users.hourlyRate,
-      })
+    const createdUser = await db.insert(users).values(userDataToInsert).returning({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      hourlyRate: users.hourlyRate,
+    })
 
-    return NextResponse.json(
-      { message: "사용자가 성공적으로 생성되었습니다.", user: createdUser[0] },
-      { status: 201 }
-    )
+    return NextResponse.json({ message: "사용자가 성공적으로 생성되었습니다.", user: createdUser[0] }, { status: 201 })
   } catch (error) {
     console.error("사용자 생성 오류:", error)
     return NextResponse.json({ error: "사용자를 생성하는 중 오류가 발생했습니다." }, { status: 500 })
