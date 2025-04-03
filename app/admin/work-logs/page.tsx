@@ -50,14 +50,28 @@ export default function AdminWorkLogsPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedWorkLog, setSelectedWorkLog] = useState<WorkLog | null>(null)
+
+  // 초기 필터 값을 설정하는 함수
+  const getInitialFilterDates = (): { startDate: string; endDate: string } => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, "0")
+    const day = String(now.getDate()).padStart(2, "0")
+    const today = `${year}-${month}-${day}`
+
+    return {
+      startDate: today,
+      endDate: today,
+    }
+  }
+
   const [filter, setFilter] = useState<{
     userId: string
     startDate: string
     endDate: string
   }>({
     userId: "",
-    startDate: new Date().toISOString().split("T")[0] || "",
-    endDate: new Date().toISOString().split("T")[0] || "",
+    ...getInitialFilterDates(),
   })
   const [formData, setFormData] = useState({
     userId: "",
@@ -508,24 +522,12 @@ export default function AdminWorkLogsPage() {
     return formattedDate
   }
 
-  // 화면 로딩 시 오늘 날짜 기준으로 초기화 useEffect 수정
+  // 화면 로딩 시 근무내역 자동 로드를 위한 useEffect
   useEffect(() => {
-    // 이미 로드되었는지 확인
     if (!initialLoadRef.current && user) {
-      // 오늘 날짜 가져오기 (서버와 일치하도록 UTC 고려)
-      const todayDate = getTodayLocalDate()
-      console.log("🌐 오늘 날짜 (서버 호환):", todayDate)
-
-      // 필터 날짜 오늘로 설정
-      setFilter((prev) => ({
-        ...prev,
-        startDate: todayDate,
-        endDate: todayDate,
-      }))
-
       // 데이터 로드 (약간 지연)
       setTimeout(() => {
-        console.log("📊 초기 데이터 로드 시작:", todayDate)
+        console.log("📊 초기 데이터 로드 시작:", filter.startDate)
         fetchWorkLogs()
       }, 150)
 
