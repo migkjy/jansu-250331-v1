@@ -1,6 +1,6 @@
 "use client"
 
-import { Calendar, FileText, Home, Users } from "lucide-react"
+import { Calendar, FileText, Users } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
@@ -70,13 +70,6 @@ export default function AdminDashboard() {
               안녕하세요, <span className="font-medium">{user?.name}</span>님! 어떤 작업을 하시겠습니까?
             </p>
           </div>
-          <Link
-            href="/"
-            className="flex items-center rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
-          >
-            <Home className="mr-1 h-4 w-4" />
-            홈으로
-          </Link>
         </div>
 
         {error && (
@@ -86,7 +79,7 @@ export default function AdminDashboard() {
         )}
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-lg bg-white shadow transition-transform hover:scale-105">
             <div className="bg-purple-50 p-5">
               <Users className="h-8 w-8 text-purple-600" />
             </div>
@@ -102,7 +95,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-lg bg-white shadow transition-transform hover:scale-105">
             <div className="bg-yellow-50 p-5">
               <Calendar className="h-8 w-8 text-yellow-600" />
             </div>
@@ -118,7 +111,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow">
+          <div className="overflow-hidden rounded-lg bg-white shadow transition-transform hover:scale-105">
             <div className="bg-red-50 p-5">
               <FileText className="h-8 w-8 text-red-600" />
             </div>
@@ -138,15 +131,15 @@ export default function AdminDashboard() {
         <div className="mt-8 rounded-lg bg-white p-6 shadow">
           <h2 className="mb-4 text-xl font-bold">빠른 통계</h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="rounded-lg bg-blue-50 p-4 text-center">
+            <div className="rounded-lg bg-blue-50 p-4 text-center transition-transform hover:scale-105">
               <p className="text-sm text-gray-500">이번 달 총 근무일수</p>
               <p className="text-2xl font-bold text-blue-600">계산 중...</p>
             </div>
-            <div className="rounded-lg bg-green-50 p-4 text-center">
+            <div className="rounded-lg bg-green-50 p-4 text-center transition-transform hover:scale-105">
               <p className="text-sm text-gray-500">이번 달 총 근무시간</p>
               <p className="text-2xl font-bold text-green-600">계산 중...</p>
             </div>
-            <div className="rounded-lg bg-indigo-50 p-4 text-center">
+            <div className="rounded-lg bg-indigo-50 p-4 text-center transition-transform hover:scale-105">
               <p className="text-sm text-gray-500">이번 달 총 지급 급여</p>
               <p className="text-2xl font-bold text-indigo-600">계산 중...</p>
             </div>

@@ -96,7 +96,10 @@ export default function ProfilePage() {
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <div className="flex items-center">
-            <Link href="/" className="mr-4 flex items-center text-gray-500 hover:text-gray-700">
+            <Link
+              href="/"
+              className="mr-4 flex items-center rounded-md bg-gray-100 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-200"
+            >
               <ArrowLeft className="mr-1 h-5 w-5" />
               홈으로
             </Link>

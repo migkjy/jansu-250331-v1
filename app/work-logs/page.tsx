@@ -1,6 +1,6 @@
 "use client"
 
-import { PlusCircle } from "lucide-react"
+import { ArrowLeft, PlusCircle } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
@@ -61,8 +61,14 @@ export default function WorkLogsPage() {
           return
         }
 
-        const userData = await userResponse.json() as MeApiResponse
+        const userData = (await userResponse.json()) as MeApiResponse
         setUser(userData.user)
+
+        // 일반 사용자 페이지이므로 관리자는 관리자 페이지로 리다이렉션
+        if (userData.user.role === "admin") {
+          window.location.href = "/admin/work-logs"
+          return
+        }
 
         // 근무내역 가져오기
         fetchWorkLogs()
@@ -78,22 +84,37 @@ export default function WorkLogsPage() {
   }, [])
 
   const fetchWorkLogs = async () => {
-    if (!user) return
-
     setLoading(true)
     try {
-      const url = `/api/work-logs?userId=${user.id}&startDate=${filter.startDate}&endDate=${filter.endDate}`
+      const url = `/api/work-logs?startDate=${filter.startDate}&endDate=${filter.endDate}`
+
+      console.log("근무내역 API 요청:", url)
+      console.log("쿠키 확인:", document.cookie.includes("token") ? "토큰 있음" : "토큰 없음")
 
       const response = await fetch(url, {
         credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       })
 
-      if (response.ok) {
-        const data = await response.json() as WorkLog[]
-        setWorkLogs(data)
-      } else {
-        throw new Error("근무내역을 가져오는데 실패했습니다.")
+      const responseData = (await response.json()) as { error?: string; details?: string }
+      console.log("API 응답:", response.status, responseData)
+
+      if (!response.ok) {
+        const errorMessage = responseData.error || responseData.details || "근무내역을 가져오는데 실패했습니다."
+
+        // 401 오류일 경우 로그인 페이지로 리다이렉트
+        if (response.status === 401) {
+          console.error("인증 오류 발생, 로그인 페이지로 리다이렉트합니다.")
+          window.location.href = "/auth/login"
+          return
+        }
+
+        throw new Error(errorMessage)
       }
+
+      setWorkLogs(responseData as WorkLog[])
     } catch (err) {
       console.error("근무내역 로드 오류:", err)
       setError(err instanceof Error ? err.message : "근무내역을 가져오는데 오류가 발생했습니다.")
@@ -125,23 +146,23 @@ export default function WorkLogsPage() {
   const calculateHours = (start: string, end: string): number => {
     try {
       // Date 객체를 사용하여 시간 차이 계산
-      const today = new Date().toISOString().split('T')[0]; // 오늘 날짜만 추출
-      const startTime = new Date(`${today}T${start}`);
-      const endTime = new Date(`${today}T${end}`);
-      
+      const today = new Date().toISOString().split("T")[0] // 오늘 날짜만 추출
+      const startTime = new Date(`${today}T${start}`)
+      const endTime = new Date(`${today}T${end}`)
+
       // 유효한 날짜인지 확인
       if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-        return 0;
+        return 0
       }
-      
+
       // 시간 차이 계산 (밀리초 -> 시간)
-      const diffMs = endTime.getTime() - startTime.getTime();
-      const diffHours = diffMs / (1000 * 60 * 60);
-      
-      return diffHours <= 0 ? 0 : Math.round(diffHours * 100) / 100;
+      const diffMs = endTime.getTime() - startTime.getTime()
+      const diffHours = diffMs / (1000 * 60 * 60)
+
+      return diffHours <= 0 ? 0 : Math.round(diffHours * 100) / 100
     } catch (error) {
-      console.error('시간 계산 오류:', error);
-      return 0;
+      console.error("시간 계산 오류:", error)
+      return 0
     }
   }
 
@@ -183,7 +204,7 @@ export default function WorkLogsPage() {
         credentials: "include",
       })
 
-      const data = await response.json() as { message: string, workLog: WorkLog }
+      const data = (await response.json()) as { message: string; workLog: WorkLog }
 
       if (!response.ok) {
         throw new Error(data.message || "근무내역 추가 중 오류가 발생했습니다.")
@@ -237,8 +258,12 @@ export default function WorkLogsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">내 근무내역</h1>
-        <Link href="/" className="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600">
-          돌아가기
+        <Link
+          href="/"
+          className="flex items-center rounded-md bg-gray-100 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-200"
+        >
+          <ArrowLeft className="mr-1 h-5 w-5" />
+          홈으로
         </Link>
       </div>
 

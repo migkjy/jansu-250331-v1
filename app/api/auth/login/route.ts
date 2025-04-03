@@ -48,6 +48,10 @@ export async function POST(request: NextRequest) {
       role: foundUser.role,
     })
 
+    console.log(
+      `JWT 토큰 생성 완료, 페이로드: { id: "${foundUser.id}", email: "${foundUser.email}", role: "${foundUser.role}" }`
+    )
+
     // 응답 생성
     const response = NextResponse.json({
       message: "로그인 성공",

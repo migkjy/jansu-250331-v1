@@ -1,6 +1,6 @@
 "use client"
 
-import { Calendar, ClipboardCheck, DollarSign, FileText, UserCircle, Users } from "lucide-react"
+import { ClipboardCheck, DollarSign, UserCircle } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -32,6 +32,12 @@ export default function Home() {
         if (response.ok) {
           const data = (await response.json()) as AuthResponse
           setUser(data.user)
+
+          // 관리자의 경우 관리자 대시보드로 리다이렉션
+          if (data.user.role === "admin") {
+            router.push("/admin")
+            return
+          }
         }
       } catch (error) {
         console.error("사용자 인증 확인 오류:", error)
@@ -41,7 +47,7 @@ export default function Home() {
     }
 
     checkAuth()
-  }, [])
+  }, [router])
 
   if (loading) {
     return (
@@ -107,7 +113,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* 일반 사용자 메뉴 */}
           <Link
             href="/work-logs"
@@ -130,44 +136,6 @@ export default function Home() {
             <h2 className="mb-2 text-xl font-semibold">급여 명세서</h2>
             <p className="flex-grow text-gray-600">월별 급여 명세서를 확인하세요.</p>
           </Link>
-
-          {/* 관리자 메뉴 */}
-          {user.role === "admin" && (
-            <>
-              <Link
-                href="/admin/users"
-                className="flex flex-col rounded-lg bg-white p-6 shadow-md transition-transform hover:scale-105"
-              >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600">
-                  <Users className="h-6 w-6" />
-                </div>
-                <h2 className="mb-2 text-xl font-semibold">직원 관리</h2>
-                <p className="flex-grow text-gray-600">직원을 추가, 수정, 삭제할 수 있습니다.</p>
-              </Link>
-
-              <Link
-                href="/admin/work-logs"
-                className="flex flex-col rounded-lg bg-white p-6 shadow-md transition-transform hover:scale-105"
-              >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100 text-yellow-600">
-                  <Calendar className="h-6 w-6" />
-                </div>
-                <h2 className="mb-2 text-xl font-semibold">근무내역 관리</h2>
-                <p className="flex-grow text-gray-600">모든 직원의 근무내역을 관리합니다.</p>
-              </Link>
-
-              <Link
-                href="/admin/salary-report"
-                className="flex flex-col rounded-lg bg-white p-6 shadow-md transition-transform hover:scale-105"
-              >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
-                  <FileText className="h-6 w-6" />
-                </div>
-                <h2 className="mb-2 text-xl font-semibold">급여 보고서</h2>
-                <p className="flex-grow text-gray-600">직원별 급여 현황을 확인합니다.</p>
-              </Link>
-            </>
-          )}
         </div>
       </div>
     </div>

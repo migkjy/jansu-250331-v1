@@ -64,7 +64,7 @@ export default function SalarySlipPage() {
           return
         }
 
-        const data = await response.json() as MeApiResponse
+        const data = (await response.json()) as MeApiResponse
         setUser(data.user)
         await fetchSalaryData(selectedMonth)
       } catch (err) {
@@ -90,7 +90,7 @@ export default function SalarySlipPage() {
         throw new Error(`급여 정보를 가져오는데 실패했습니다 (${response.status})`)
       }
 
-      const data = await response.json() as SalarySlip
+      const data = (await response.json()) as SalarySlip
       setSalaryData(data)
     } catch (err) {
       console.error("급여 정보 로드 오류:", err)
@@ -155,8 +155,12 @@ export default function SalarySlipPage() {
       <div className="container mx-auto max-w-5xl px-4">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center">
-            <Link href="/" className="mr-4 rounded-full p-2 text-gray-600 hover:bg-gray-200">
-              <ArrowLeft size={20} />
+            <Link
+              href="/"
+              className="mr-4 flex items-center rounded-md bg-gray-100 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-200"
+            >
+              <ArrowLeft size={20} className="mr-1" />
+              뒤로
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">나의 급여 명세서</h1>
           </div>
