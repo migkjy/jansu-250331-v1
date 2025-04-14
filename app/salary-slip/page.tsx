@@ -1,8 +1,8 @@
 "use client"
 
-import { ArrowLeft, Download } from "lucide-react"
-import Link from "next/link"
+import { Download } from "lucide-react"
 import { useEffect, useState } from "react"
+import UserLayout from "../components/UserLayout"
 
 interface User {
   id: string
@@ -18,6 +18,8 @@ interface WorkLog {
   workDate: string
   startTime: string
   endTime: string
+  breakStartTime?: string | null
+  breakEndTime?: string | null
   workHours: number
   hourlyRate: number
   paymentAmount: number
@@ -49,7 +51,9 @@ export default function SalarySlipPage() {
   const [salaryData, setSalaryData] = useState<SalarySlip | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [user, setUser] = useState<User | null>(null)
+  const [generatingPdf, setGeneratingPdf] = useState(false)
 
   useEffect(() => {
     // 사용자 인증 확인
@@ -105,28 +109,44 @@ export default function SalarySlipPage() {
   }
 
   const downloadPdf = async () => {
+    if (!user) return
+
+    setGeneratingPdf(true)
+    setError("")
+    setSuccess("")
+
     try {
-      const response = await fetch(`/api/users/me/salary-slip/pdf?month=${selectedMonth}`, {
+      // 어드민 페이지와 동일한 방식으로 구현 - 단일 사용자 PDF 다운로드 요청
+      const response = await fetch(`/api/salary-slips/download`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds: [user.id], month: selectedMonth }),
         credentials: "include",
       })
 
       if (!response.ok) {
-        throw new Error("PDF 생성에 실패했습니다.")
+        const errorData = (await response.json()) as { error?: string }
+        throw new Error(errorData.error || "PDF 다운로드 실패")
       }
 
-      // PDF 다운로드 처리
       const blob = await response.blob()
+      // Trigger file download
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
       a.download = `급여명세서_${selectedMonth}.pdf`
       document.body.appendChild(a)
       a.click()
-      document.body.removeChild(a)
+      a.remove()
       window.URL.revokeObjectURL(url)
+
+      setSuccess("급여명세서 PDF 다운로드가 완료되었습니다.")
+      setTimeout(() => setSuccess(""), 5000)
     } catch (err) {
       console.error("PDF 다운로드 오류:", err)
-      setError(err instanceof Error ? err.message : "PDF 생성 중 오류가 발생했습니다.")
+      setError(err instanceof Error ? err.message : "PDF 다운로드 중 오류가 발생했습니다.")
+    } finally {
+      setGeneratingPdf(false)
     }
   }
 
@@ -142,134 +162,109 @@ export default function SalarySlipPage() {
     return `${date.getMonth() + 1}월 ${date.getDate()}일`
   }
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-lg">로딩 중...</p>
+  // Action buttons
+  const actionButtons = (
+    <>
+      <div className="flex items-center space-x-4">
+        <input
+          type="month"
+          value={selectedMonth}
+          onChange={handleMonthChange}
+          className="rounded-md border border-gray-300 px-3 py-2"
+        />
+        {salaryData && (
+          <button
+            onClick={downloadPdf}
+            disabled={generatingPdf}
+            className={`flex items-center rounded-md px-4 py-2 text-white ${
+              generatingPdf ? "cursor-not-allowed bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {generatingPdf ? "PDF 생성 중..." : "PDF 다운로드"}
+          </button>
+        )}
       </div>
-    )
-  }
+    </>
+  )
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto max-w-5xl px-4">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center">
-            <Link
-              href="/"
-              className="mr-4 flex items-center rounded-md bg-gray-100 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-200"
-            >
-              <ArrowLeft size={20} className="mr-1" />
-              뒤로
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">나의 급여 명세서</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <input
-              type="month"
-              value={selectedMonth}
-              onChange={handleMonthChange}
-              className="rounded-md border border-gray-300 px-3 py-2"
-            />
-          </div>
-        </div>
-
-        {error ? <div className="mb-6 rounded-md bg-red-50 p-4 text-red-600">{error}</div> : null}
-
-        {salaryData ? (
-          <div className="space-y-6">
-            <div className="overflow-hidden rounded-lg bg-white shadow">
-              <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                <h2 className="text-xl font-semibold text-gray-800">{formatMonth(selectedMonth)} 급여 명세서</h2>
-                <p className="text-sm text-gray-500">
-                  {salaryData.user.name} ({user?.email})
-                </p>
+    <UserLayout title="급여 명세서" error={error} success={success} isLoading={loading} actions={actionButtons}>
+      {salaryData && (
+        <div className="space-y-6">
+          <div className="overflow-hidden rounded-lg bg-white shadow">
+            <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
+              <h2 className="text-xl font-semibold text-gray-800">{formatMonth(selectedMonth)} 급여 명세서</h2>
+              <p className="text-sm text-gray-500">
+                {salaryData.user.name} ({user?.email})
+              </p>
+            </div>
+            <div className="p-6">
+              <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="rounded-lg bg-blue-50 p-4 text-center">
+                  <p className="text-sm font-medium text-blue-800">총 근무일수</p>
+                  <p className="text-2xl font-bold text-blue-600">{salaryData.summary.totalWorkDays}일</p>
+                </div>
+                <div className="rounded-lg bg-green-50 p-4 text-center">
+                  <p className="text-sm font-medium text-green-800">총 근무시간</p>
+                  <p className="text-2xl font-bold text-green-600">{salaryData.summary.totalWorkHours}시간</p>
+                </div>
+                <div className="rounded-lg bg-purple-50 p-4 text-center">
+                  <p className="text-sm font-medium text-purple-800">총 급여</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {salaryData.summary.totalPayment.toLocaleString()}원
+                  </p>
+                </div>
               </div>
-              <div className="p-6">
-                <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div className="rounded-lg bg-blue-50 p-4 text-center">
-                    <p className="text-sm font-medium text-blue-800">총 근무일수</p>
-                    <p className="text-2xl font-bold text-blue-600">{salaryData.summary.totalWorkDays}일</p>
-                  </div>
-                  <div className="rounded-lg bg-green-50 p-4 text-center">
-                    <p className="text-sm font-medium text-green-800">총 근무시간</p>
-                    <p className="text-2xl font-bold text-green-600">{salaryData.summary.totalWorkHours}시간</p>
-                  </div>
-                  <div className="rounded-lg bg-purple-50 p-4 text-center">
-                    <p className="text-sm font-medium text-purple-800">총 급여</p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {salaryData.summary.totalPayment.toLocaleString()}원
-                    </p>
-                  </div>
-                </div>
 
-                <div className="mb-4 overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                          날짜
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                          출근
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                          퇴근
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                          근무시간
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                          시급
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                          일급
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                          메모
-                        </th>
+              <div className="mb-4 overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        날짜
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        출근
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        퇴근
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        근무시간
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        시급
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                        일급
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {salaryData.details.map((workLog) => (
+                      <tr key={workLog.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                          {formatDate(workLog.workDate)}
+                        </td>
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">{workLog.startTime}</td>
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">{workLog.endTime}</td>
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">{workLog.workHours}시간</td>
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+                          {Math.round(Number(workLog.hourlyRate)).toLocaleString()}원
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
+                          {Math.round(Number(workLog.paymentAmount)).toLocaleString()}원
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
-                      {salaryData.details.map((workLog) => (
-                        <tr key={workLog.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {formatDate(workLog.workDate)}
-                          </td>
-                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">{workLog.startTime}</td>
-                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">{workLog.endTime}</td>
-                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">{workLog.workHours}시간</td>
-                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                            {workLog.hourlyRate.toLocaleString()}원
-                          </td>
-                          <td className="px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
-                            {workLog.paymentAmount.toLocaleString()}원
-                          </td>
-                          <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">{workLog.memo || "-"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={downloadPdf}
-                    className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    PDF 다운로드
-                  </button>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-        ) : (
-          <div className="rounded-lg bg-white p-8 text-center shadow">
-            <p className="text-lg text-gray-600">{error ? error : "선택한 월의 급여 정보가 없습니다."}</p>
-          </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </UserLayout>
   )
 }

@@ -10,7 +10,7 @@ alwaysApply: true
 - You can use markdown but dont have to
 
 # use neon DB
-
+# use pnpm, not npm for this project
 
 # follow this: 
 [README.md](mdc:README.md)

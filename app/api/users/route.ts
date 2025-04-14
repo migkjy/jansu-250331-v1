@@ -12,6 +12,8 @@ interface CreateUserRequest {
   role?: string
   hourlyRate?: number
   phoneNumber?: string
+  defaultBreakStartTime?: string
+  defaultBreakEndTime?: string
 }
 
 // 사용자 목록 조회 API
@@ -58,6 +60,9 @@ export async function GET(request: NextRequest) {
         email: users.email,
         role: users.role,
         hourlyRate: users.hourlyRate,
+        phoneNumber: users.phoneNumber,
+        defaultBreakStartTime: users.defaultBreakStartTime,
+        defaultBreakEndTime: users.defaultBreakEndTime,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -108,7 +113,8 @@ export async function POST(request: NextRequest) {
 
     // 요청 데이터 파싱
     const requestData = (await request.json()) as CreateUserRequest
-    const { name, email, password, role, hourlyRate } = requestData
+    const { name, email, password, role, hourlyRate, phoneNumber, defaultBreakStartTime, defaultBreakEndTime } =
+      requestData
 
     // 필수 필드 확인
     if (!name || !email || !password) {
@@ -132,6 +138,9 @@ export async function POST(request: NextRequest) {
       email,
       passwordHash,
       role: role || "user",
+      phoneNumber,
+      defaultBreakStartTime: defaultBreakStartTime || "12:00",
+      defaultBreakEndTime: defaultBreakEndTime || "13:00",
     }
 
     // 시급이 있는 경우만 포함
@@ -148,6 +157,9 @@ export async function POST(request: NextRequest) {
       email: users.email,
       role: users.role,
       hourlyRate: users.hourlyRate,
+      phoneNumber: users.phoneNumber,
+      defaultBreakStartTime: users.defaultBreakStartTime,
+      defaultBreakEndTime: users.defaultBreakEndTime,
     })
 
     return NextResponse.json({ message: "사용자가 성공적으로 생성되었습니다.", user: createdUser[0] }, { status: 201 })
