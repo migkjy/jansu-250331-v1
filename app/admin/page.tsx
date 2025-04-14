@@ -3,6 +3,7 @@
 import { Calendar, FileText, Users } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import AdminLayout from "./components/AdminLayout"
 
 interface User {
   id: string
@@ -15,10 +16,20 @@ interface AuthResponse {
   user: User
 }
 
+interface DashboardStats {
+  totalEmployees: number
+  totalHours: number
+  totalPayment: number
+  currentMonth: string
+}
+
 export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [statsLoading, setStatsLoading] = useState(true)
+  const [statsError, setStatsError] = useState("")
 
   useEffect(() => {
     const checkAdminAuth = async () => {
@@ -40,6 +51,9 @@ export default function AdminDashboard() {
         }
 
         setUser(data.user)
+        
+        // Once authenticated, fetch the stats
+        await fetchStats()
       } catch (err) {
         console.error("관리자 인증 오류:", err)
         setError(err instanceof Error ? err.message : "관리자 인증 중 오류가 발생했습니다.")
@@ -51,29 +65,51 @@ export default function AdminDashboard() {
 
     checkAdminAuth()
   }, [])
+  
+  const fetchStats = async () => {
+    setStatsLoading(true)
+    setStatsError("")
+    
+    try {
+      const response = await fetch("/api/admin/stats", {
+        credentials: "include"
+      })
+      
+      if (!response.ok) {
+        throw new Error("통계 데이터를 불러오는데 실패했습니다.")
+      }
+      
+      const data = await response.json() as DashboardStats
+      setStats(data)
+    } catch (err) {
+      console.error("통계 데이터 로드 오류:", err)
+      setStatsError(err instanceof Error ? err.message : "통계 데이터를 가져오는데 오류가 발생했습니다.")
+    } finally {
+      setStatsLoading(false)
+    }
+  }
+
+  // Format the month in Korean
+  const formatMonth = (dateStr: string) => {
+    const [year, month] = dateStr.split("-")
+    return `${year}년 ${month}월`
+  }
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-lg">로딩 중...</p>
-      </div>
+      <AdminLayout title="관리자 대시보드" isLoading={true}>
+        {/* AdminLayout handles loading state */}
+      </AdminLayout>
     )
   }
 
   return (
-    <div className="bg-gray-50 p-6">
+    <AdminLayout title="관리자 대시보드" error={error || statsError}>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">관리자 대시보드</h1>
         <p className="mt-2 text-gray-600">
           안녕하세요, <span className="font-medium">{user?.name}</span>님! 환영합니다.
         </p>
       </div>
-
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-700">{error}</div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="overflow-hidden rounded-lg bg-white shadow transition-transform hover:scale-105">
@@ -126,23 +162,35 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mt-8 rounded-lg bg-white p-6 shadow">
-        <h2 className="mb-4 text-xl font-bold">빠른 통계 (예시)</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-lg bg-blue-50 p-4 text-center transition-transform hover:scale-105">
-            <p className="text-sm text-gray-500">총 직원 수</p>
-            <p className="text-2xl font-bold text-blue-600">15명</p>
+        <h2 className="mb-4 text-xl font-bold">
+          {stats?.currentMonth ? `${formatMonth(stats.currentMonth)} 통계` : "빠른 통계"}
+        </h2>
+        
+        {statsLoading ? (
+          <div className="flex h-24 items-center justify-center">
+            <p className="text-gray-500">통계 데이터를 불러오는 중...</p>
           </div>
-          <div className="rounded-lg bg-green-50 p-4 text-center transition-transform hover:scale-105">
-            <p className="text-sm text-gray-500">이번 달 총 근무시간</p>
-            <p className="text-2xl font-bold text-green-600">1234.5 시간</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-lg bg-blue-50 p-4 text-center transition-transform hover:scale-105">
+              <p className="text-sm text-gray-500">총 직원 수</p>
+              <p className="text-2xl font-bold text-blue-600">{stats?.totalEmployees || 0}명</p>
+            </div>
+            <div className="rounded-lg bg-green-50 p-4 text-center transition-transform hover:scale-105">
+              <p className="text-sm text-gray-500">이번 달 총 근무시간</p>
+              <p className="text-2xl font-bold text-green-600">{stats?.totalHours?.toFixed(1) || "0"} 시간</p>
+            </div>
+            <div className="rounded-lg bg-indigo-50 p-4 text-center transition-transform hover:scale-105">
+              <p className="text-sm text-gray-500">이번 달 총 지급 급여</p>
+              <p className="text-2xl font-bold text-indigo-600">{(stats?.totalPayment || 0).toLocaleString()} 원</p>
+            </div>
           </div>
-          <div className="rounded-lg bg-indigo-50 p-4 text-center transition-transform hover:scale-105">
-            <p className="text-sm text-gray-500">이번 달 총 지급 급여</p>
-            <p className="text-2xl font-bold text-indigo-600">12,345,678 원</p>
-          </div>
-        </div>
-        <p className="mt-4 text-right text-sm text-gray-500">* 실제 데이터는 각 페이지에서 확인하세요.</p>
+        )}
+        
+        {!statsLoading && (
+          <p className="mt-4 text-right text-sm text-gray-500">* {stats?.currentMonth ? `${formatMonth(stats.currentMonth)}` : "이번 달"} 기준 데이터입니다.</p>
+        )}
       </div>
-    </div>
+    </AdminLayout>
   )
 }
